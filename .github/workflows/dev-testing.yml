@@ -1,5 +1,4 @@
-code :
-name: Dev Testing 🔎
+name: Dev Testing
 
 on:
   pull_request:
