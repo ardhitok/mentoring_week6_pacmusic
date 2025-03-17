@@ -24,8 +24,6 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY_STAGING }}
           debug: true
           script: |
-            set -e  # Stop script jika terjadi error
-            
             echo "➡️  Cek apakah folder staging sudah ada..."
             if [ -d "${{ vars.APP_STG_PATH }}" ]; then
               cd ${{ vars.APP_STG_PATH }}
