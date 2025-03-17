@@ -11,46 +11,39 @@ jobs:
     environment: staging
 
     steps:
-      # 1️⃣ Ambil kode terbaru dari repository
       - name: Checkout Repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v3
 
-      # 2️⃣ Login ke server menggunakan SSH dan jalankan deployment
-      - name: Deploy to Staging Server
+      - name: Set up SSH
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.SSH_HOST_STAGING }}
           username: ${{ secrets.SSH_USER_NAME_STAGING }}
           key: ${{ secrets.SSH_PRIVATE_KEY_STAGING }}
           script: |
-            # Cek apakah folder aplikasi sudah ada
-            if [ -d "${{ vars.APP_STG_PATH }}" ]; then
-              echo "Masuk ke folder aplikasi..."
-              cd ${{ vars.APP_STG_PATH }}
-              sudo docker compose down pacmusic-stg  # Matikan container lama
-              git pull origin main  # Tarik kode terbaru
+            # Check if APP_STG_PATH exists
+            if [ -d "${{ secrets.APP_STG_PATH }}" ]; then
+              cd ${{ secrets.APP_STG_PATH }}
+              sudo docker compose down pacmusic-stg
+              git pull origin main
             else
-              echo "Folder tidak ditemukan, cloning repository..."
               ssh-keyscan github.com > ~/.ssh/known_hosts
-              git clone ${{ secrets.GIT_URL }} ${{ vars.APP_STG_PATH }}
-              cd ${{ vars.APP_STG_PATH }}
+              git clone ${{ secrets.GIT_URL }} ${{ secrets.APP_STG_PATH }}
+              cd ${{ secrets.APP_STG_PATH }}
             fi
-
-            # Buat file .env baru
-            echo "Membuat file .env..."
-            echo "APP_STG_PORT=${{ secrets.APP_STG_PORT }}" > .env
-            echo "MINIO_STG_ENDPOINT=${{ secrets.MINIO_STG_ENDPOINT }}" >> .env
-            echo "MINIO_STG_ACCESS_KEY=${{ secrets.MINIO_STG_ACCESS_KEY }}" >> .env
-            echo "MINIO_STG_SECRET_KEY=${{ secrets.MINIO_STG_SECRET_KEY }}" >> .env
-
-            # Login ke Docker Hub
-            echo "${{ secrets.DOCKER_HUB_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_HUB_USERNAME }}" --password-stdin
-
-            # Jalankan ulang aplikasi dengan versi terbaru
+            
+            # Generate .env file
+            cat <<EOF > .env
+            APP_STG_PORT=${{ secrets.APP_STG_PORT }}
+            MINIO_STG_ENDPOINT=${{ secrets.MINIO_STG_ENDPOINT }}
+            MINIO_STG_ACCESS_KEY=${{ secrets.MINIO_STG_ACCESS_KEY }}
+            MINIO_STG_SECRET_KEY=${{ secrets.MINIO_STG_SECRET_KEY }}
+            EOF
+            
+            # Start application
             sudo docker compose up --build --detach pacmusic-stg
 
-      # 3️⃣ Tes apakah aplikasi berjalan dengan baik
-      - name: Test Application Endpoint
+      - name: Test Deployment
         run: |
-          echo "Menguji endpoint aplikasi..."
-          curl -fsSL ${{ secrets.APP_STG_URL }} && echo "✅ Aplikasi Berjalan!" || (echo "❌ Endpoint Gagal!" && exit 1)
+          sleep 10
+          curl ${{ secrets.STG_URL }}
