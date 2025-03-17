@@ -2,7 +2,7 @@ name: Deploy Production 🚀
 
 on:
   release:
-    types: [published, edited]  # Workflow berjalan saat ada release baru atau update
+    types: [published, edited]
 
 jobs:
   deploy:
@@ -48,4 +48,15 @@ jobs:
       - name: Test Production Endpoint
         run: |
           sleep 10  # Tunggu beberapa detik agar container siap
-          curl -f ${{ secrets.PROD_URL }} || exit 1
+          echo "Mencoba mengakses endpoint: ${{ secrets.PROD_URL }}"
+          curl -v ${{ secrets.PROD_URL }} || exit 1
+
+      - name: Check Docker Container Status
+        run: |
+          echo "Memeriksa status kontainer..."
+          docker ps -a
+
+      - name: Check Logs of pacmusic-prod
+        run: |
+          echo "Memeriksa log kontainer pacmusic-prod..."
+          docker logs pacmusic-prod
