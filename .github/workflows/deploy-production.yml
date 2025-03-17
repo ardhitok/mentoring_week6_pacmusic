@@ -43,7 +43,7 @@ jobs:
             echo "MINIO_PROD_SECRET_KEY=${{ secrets.MINIO_PROD_SECRET_KEY }}" >> .env
 
             # Jalankan deployment
-            sudo docker-compose up --build --detach pacmusic-prod
+            sudo docker-compose up build --detach pacmusic-prod
 
       - name: Test Production Endpoint
         run: |
