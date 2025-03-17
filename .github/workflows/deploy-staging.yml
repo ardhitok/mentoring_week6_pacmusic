@@ -24,27 +24,38 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY_STAGING }}
           debug: true
           script: |
-            # Cek apakah path staging sudah ada
+            set -e  # Stop script jika terjadi error
+            
+            echo "➡️  Cek apakah folder staging sudah ada..."
             if [ -d "${{ vars.APP_STG_PATH }}" ]; then
               cd ${{ vars.APP_STG_PATH }}
-              sudo docker compose down pacmusic-stg
+              echo "📌  Masuk ke direktori staging: ${{ vars.APP_STG_PATH }}"
+
+              echo "🔄  Checkout branch main..."
+              git checkout main
+              git fetch --all
               git pull origin main
             else
+              echo "🚀  Folder belum ada, melakukan clone repository..."
               ssh-keyscan github.com > ~/.ssh/known_hosts
               git clone ${{ secrets.GIT_URL }} ${{ vars.APP_STG_PATH }}
               cd ${{ vars.APP_STG_PATH }}
             fi
 
-            # Generate file .env
-            echo "APP_STG_PORT=${{ secrets.APP_STG_PORT }}" > .env
-            echo "MINIO_STG_ENDPOINT=${{ secrets.MINIO_STG_ENDPOINT }}" >> .env
-            echo "MINIO_STG_ACCESS_KEY=${{ secrets.MINIO_STG_ACCESS_KEY }}" >> .env
-            echo "MINIO_STG_SECRET_KEY=${{ secrets.MINIO_STG_SECRET_KEY }}" >> .env
+            echo "🛠  Generate file .env"
+            cat <<EOF > .env
+            APP_STG_PORT=${{ secrets.APP_STG_PORT }}
+            MINIO_STG_ENDPOINT=${{ secrets.MINIO_STG_ENDPOINT }}
+            MINIO_STG_ACCESS_KEY=${{ secrets.MINIO_STG_ACCESS_KEY }}
+            MINIO_STG_SECRET_KEY=${{ secrets.MINIO_STG_SECRET_KEY }}
+            EOF
 
-            # Jalankan aplikasi dengan Docker
+            echo "📦  Menjalankan ulang container Docker..."
+            sudo docker compose down pacmusic-stg
             sudo docker compose up --build --detach pacmusic-stg
 
       - name: Test Hit Endpoint
         run: |
+          echo "⏳  Menunggu 10 detik sebelum test endpoint..."
           sleep 10
-          curl "${{ secrets.STG_URL }}"
+          curl -v "${{ secrets.STG_URL }}"
