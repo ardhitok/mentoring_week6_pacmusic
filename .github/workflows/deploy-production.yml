@@ -1,0 +1,51 @@
+name: Deploy Production 🚀
+
+on:
+  release:
+    types: [published, edited]  # Workflow berjalan saat ada release baru atau update
+
+jobs:
+  deploy:
+    name: Deploy to Production Server
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Setup SSH Connection & Deploy
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SSH_HOST_PRODUCTION }}
+          username: ${{ secrets.SSH_USER_NAME_PRODUCTION }}
+          key: ${{ secrets.SSH_PRIVATE_KEY_PRODUCTION }}
+          script: |
+            # Cek apakah direktori aplikasi sudah ada
+            if [ -d "${{ vars.APP_PROD_PATH }}" ]; then
+              echo "Direktori ${APP_PROD_PATH} ditemukan, melakukan update..."
+              cd ${{ vars.APP_PROD_PATH }}
+              sudo docker compose down pacmusic-prod
+              git pull origin main
+            else
+              echo "Direktori ${APP_PROD_PATH} tidak ditemukan, melakukan clone repository..."
+              ssh-keyscan github.com >> ~/.ssh/known_hosts
+              git clone ${{ secrets.GIT_URL }} ${{ vars.APP_PROD_PATH }}
+              cd ${{ vars.APP_PROD_PATH }}
+            fi
+
+            # Generate file .env
+            echo "APP_IMAGE=${{ secrets.DOCKERHUB_USERNAME }}/pacmusic" > .env
+            echo "APP_TAG=$(git describe --tags --abbrev=0)" >> .env
+            echo "APP_PROD_PORT=${{ vars.APP_PROD_PORT }}" >> .env
+            echo "MINIO_PROD_ENDPOINT=${{ secrets.MINIO_PROD_ENDPOINT }}" >> .env
+            echo "MINIO_PROD_ACCESS_KEY=${{ secrets.MINIO_PROD_ACCESS_KEY }}" >> .env
+            echo "MINIO_PROD_SECRET_KEY=${{ secrets.MINIO_PROD_SECRET_KEY }}" >> .env
+
+            # Jalankan deployment
+            sudo docker compose up --build --detach pacmusic-prod
+
+      - name: Test Production Endpoint
+        run: |
+          sleep 10  # Tunggu beberapa detik agar container siap
+          curl -f ${{ secrets.PROD_URL }} || exit 1
