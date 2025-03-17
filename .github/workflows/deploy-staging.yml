@@ -22,14 +22,14 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY_STAGING }}
           script: |
             # Check if APP_STG_PATH exists
-            if [ -d "${{ secrets.APP_STG_PATH }}" ]; then
-              cd ${{ secrets.APP_STG_PATH }}
+            if [ -d "${{ vars.APP_STG_PATH }}" ]; then
+              cd ${{ vars.APP_STG_PATH }}
               sudo docker compose down pacmusic-stg
               git pull origin main
             else
               ssh-keyscan github.com > ~/.ssh/known_hosts
-              git clone ${{ secrets.GIT_URL }} ${{ secrets.APP_STG_PATH }}
-              cd ${{ secrets.APP_STG_PATH }}
+              git clone ${{ secrets.GIT_URL }} ${{ vars.APP_STG_PATH }}
+              cd ${{ vars.APP_STG_PATH }}
             fi
             
             # Generate .env file
@@ -40,8 +40,9 @@ jobs:
             MINIO_STG_SECRET_KEY=${{ secrets.MINIO_STG_SECRET_KEY }}
             EOF
             
-            # Start application
-            sudo docker compose up --build --detach pacmusic-stg
+            # Build dan deploy ulang container dengan benar
+            sudo docker compose build pacmusic-stg
+            sudo docker compose up --detach --force-recreate pacmusic-stg
 
       - name: Test Deployment
         run: |
