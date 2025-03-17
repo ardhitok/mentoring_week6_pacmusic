@@ -31,4 +31,4 @@ jobs:
           docker buildx build --platform linux/amd64 \
             -t ${{ secrets.DOCKERHUB_USERNAME }}/pacmusic:${{ env.TAG }} \
             -t ${{ secrets.DOCKERHUB_USERNAME }}/pacmusic:latest \
-            --push .
+            --push ./app
