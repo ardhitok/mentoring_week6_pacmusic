@@ -44,8 +44,8 @@ jobs:
             EOF
             
             # Build dan deploy ulang container dengan benar
-            sudo docker-compose build pacmusic-stg
-            sudo docker-compose up --detach --force-recreate pacmusic-stg
+            sudo docker compose build pacmusic-stg
+            sudo docker compose up --detach --force-recreate pacmusic-stg
 
       - name: Test Deployment
         run: |
