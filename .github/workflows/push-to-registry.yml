@@ -22,13 +22,23 @@ jobs:
 
       - name: Setup Docker Buildx
         uses: docker/setup-buildx-action@v3
+      
+      - name: Push current & latest app
+        uses: docker/build-push-action@v5
+        with:
+          context: ./app
+          file: ./app/Dockerfile
+          push: true
+          tags: | 
+            ${{ secrets.DOCKERHUB_USERNAME }}/${{ vars.APP_NAME }}:${{ github.ref_name }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/${{ vars.APP_NAME }}:latest
 
-      - name: Extract Tag Name
-        run: echo "TAG=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
+      #- name: Extract Tag Name
+      #  run: echo "TAG=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
 
-      - name: Build and Push Docker Image
-        run: |
-          docker buildx build --platform linux/amd64 \
-            -t ${{ secrets.DOCKERHUB_USERNAME }}/pacmusic:${{ env.TAG }} \
-            -t ${{ secrets.DOCKERHUB_USERNAME }}/pacmusic:latest \
-            --push ./app
+      #- name: Build and Push Docker Image
+      #  run: |
+      #    docker buildx build --platform linux/amd64 \
+      #      -t ${{ secrets.DOCKERHUB_USERNAME }}/pacmusic:${{ env.TAG }} \
+      #      -t ${{ secrets.DOCKERHUB_USERNAME }}/pacmusic:latest \
+      #      --push ./app

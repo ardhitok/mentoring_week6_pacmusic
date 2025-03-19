@@ -7,6 +7,7 @@ on:
 
 jobs:
   build-and-test:
+    name: Build and Testing
     runs-on: ubuntu-latest
     environment: dev-testing
 
@@ -14,14 +15,14 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v3
 
-      - name: Buat .env File
+      - name: Create .env File
         run: |
           echo "MINIO_DEV_ENDPOINT=${{ secrets.MINIO_DEV_ENDPOINT }}" >> .env
           echo "MINIO_DEV_ACCESS_KEY=${{ secrets.MINIO_DEV_ACCESS_KEY }}" >> .env
           echo "MINIO_DEV_SECRET_KEY=${{ secrets.MINIO_DEV_SECRET_KEY }}" >> .env
 
-      - name: Jalankan Aplikasi dengan Docker Compose
-        run: sudo docker compose up --build --detach pacmusic-dev
+      - name: Build and Run Container
+        run: sudo docker compose up pacmusic-dev --build --detach 
 
       - name: Test Hit Endpoint
         run: |
